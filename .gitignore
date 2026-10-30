@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+input/*
+!input/入稿方法.txt
+config/*
+!config/.gitkeep
+results/
+logs/
+.DS_Store
