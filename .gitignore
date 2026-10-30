@@ -7,4 +7,5 @@ config/*
 !config/.gitkeep
 results/
 logs/
+*.zip
 .DS_Store
