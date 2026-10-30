@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, messagebox
+from user_agent import normalize_user_page, saved_user_page, save_policy
 
 ROOT=Path(__file__).resolve().parent
 TERMS='https://commons.wikimedia.org/wiki/Commons:Reusing_content_outside_Wikimedia'
@@ -17,7 +18,7 @@ def unique_output(test=False):
 
 class App:
  def __init__(self, test=False):
-  self.test=test; self.root=tk.Tk(); self.root.title('大和噺 歴史資料収集'); self.root.geometry('760x640'); self.busy=False
+  self.test=test; self.root=tk.Tk(); self.root.title('大和噺 歴史資料収集 v0.3'); self.root.geometry('760x640'); self.busy=False
   for folder in ('input','config','results','logs'): (ROOT/folder).mkdir(exist_ok=True)
   self.policy=load(ROOT/'config/policy.json',{})
   ttk.Label(self.root,text='大和噺｜Commons実接続テスト' if test else '大和噺｜歴史資料収集',font=('',18)).pack(pady=12)
@@ -27,8 +28,9 @@ class App:
    ttk.Button(bar,text=label,command=lambda u=url:webbrowser.open(u)).pack(side='left',padx=4)
   self.checked=tk.BooleanVar(value=self.policy.get('commons_api_terms_reviewed',False))
   ttk.Checkbutton(self.root,text='上記の現行利用条件を読み、API利用条件を確認しました',variable=self.checked).pack()
-  ttk.Label(self.root,text='自分の連絡先URLまたはメール（APIのUser-Agent用）').pack(pady=(8,0))
-  self.contact=tk.StringVar(value=self.policy.get('contact','')); ttk.Entry(self.root,textvariable=self.contact,width=70).pack()
+  ttk.Label(self.root,text='WikimediaユーザーページURL').pack(pady=(8,0))
+  self.contact=tk.StringVar(value=saved_user_page(self.policy)); ttk.Entry(self.root,textvariable=self.contact,width=70).pack()
+  ttk.Label(self.root,text='例: https://commons.wikimedia.org/wiki/User:あなたの利用者名\n個人メールは不要です。自分の連絡可能な利用者ページを指定してください。').pack()
   ttk.Label(self.root,text='検索後、候補を個別確認し「個別確認・見送りを登録」から登録してください。\n権利・史実未確認の画像はダウンロードしません。').pack(pady=10)
   row=ttk.Frame(self.root); row.pack()
   self.search=ttk.Button(row,text='検索を開始',command=lambda:self.start(False)); self.search.pack(side='left',padx=4)
@@ -46,17 +48,20 @@ class App:
   self.root.destroy()
  def start(self, download):
   if self.busy: return
-  contact=self.contact.get().strip()
-  if not self.checked.get() or not contact or '\n' in contact or '\r' in contact:
-   messagebox.showerror('初回設定','利用条件を確認し、連絡先を入力してください。'); return
+  if not self.checked.get():
+   messagebox.showerror('初回設定','利用条件を確認してください。'); return
+  try: contact=normalize_user_page(self.contact.get())
+  except (ValueError, UnicodeError) as e:
+   messagebox.showerror('WikimediaユーザーページURL',str(e)); return
   script=ROOT/'input/完成原稿.txt'
   if self.test:
    script=ROOT/'config/commons_test.txt'; script.write_text('【実接続テスト用原稿】江戸の町並み。Hiroshige Nihonbashi の歴史資料を調べます。',encoding='utf-8')
   if not script.exists(): messagebox.showerror('原稿がありません','input/完成原稿.txt を保存してください。サンプルは examples にあります。'); return
-  self.policy={'commons_api_terms_reviewed':True,'terms_url':API_TERMS,'reuse_terms_url':TERMS,'reviewed_at':datetime.now().astimezone().isoformat(),'contact':contact}
-  (ROOT/'config/policy.json').write_text(json.dumps(self.policy,ensure_ascii=False,indent=2),encoding='utf-8')
+  updated=dict(self.policy)
+  updated.update({'commons_api_terms_reviewed':True,'terms_url':API_TERMS,'reuse_terms_url':TERMS,'reviewed_at':datetime.now().astimezone().isoformat()})
+  self.policy=save_policy(ROOT/'config/policy.json',updated,contact)
   out=unique_output(self.test)
-  cmd=[sys.executable,str(ROOT/'collector.py'),'--script',str(script),'--output',str(out),'--policy',str(ROOT/'config/policy.json'),'--user-agent','YamatoMaterials/0.2 ('+contact+')','--queries','4','--limit','3' if self.test else '4']
+  cmd=[sys.executable,str(ROOT/'collector.py'),'--script',str(script),'--output',str(out),'--policy',str(ROOT/'config/policy.json'),'--wikimedia-user-page',contact,'--queries','4','--limit','3' if self.test else '4']
   review=ROOT/'config/review.json'
   if review.exists(): cmd+=['--review',str(review)]
   if download: cmd+=['--download']

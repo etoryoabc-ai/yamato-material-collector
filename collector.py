@@ -2,6 +2,7 @@
 import argparse, csv, hashlib, html, json, re, time, urllib.parse, urllib.request
 from pathlib import Path
 from datetime import datetime, timezone
+from user_agent import build_user_agent
 
 UNKNOWN = '不明'
 TOPICS = [
@@ -167,8 +168,13 @@ def run(args):
  print(json.dumps({'candidates':len(rows),'downloaded':successes,'errors':len(errors),'output':str(out)},ensure_ascii=False))
 
 def main():
- p=argparse.ArgumentParser(description=__doc__); p.add_argument('--script',required=True); p.add_argument('--output',required=True); p.add_argument('--encoding',default='utf-8-sig'); p.add_argument('--policy'); p.add_argument('--review'); p.add_argument('--download',action='store_true'); p.add_argument('--user-agent',default='YamatoMaterials/0.1 (local research tool)'); p.add_argument('--queries',type=int,default=2); p.add_argument('--limit',type=int,default=4); p.add_argument('--max-mb',type=int,default=80)
+ p=argparse.ArgumentParser(description=__doc__); p.add_argument('--script',required=True); p.add_argument('--output',required=True); p.add_argument('--encoding',default='utf-8-sig'); p.add_argument('--policy'); p.add_argument('--review'); p.add_argument('--download',action='store_true'); p.add_argument('--user-agent',help='明示的な上級者用User-Agent'); p.add_argument('--wikimedia-user-page',help='Wikimedia利用者ページのHTTPS URL'); p.add_argument('--queries',type=int,default=2); p.add_argument('--limit',type=int,default=4); p.add_argument('--max-mb',type=int,default=80)
  a=p.parse_args()
+ if a.wikimedia_user_page and a.user_agent: p.error('連絡先URLと上級者用User-Agentはどちらか一方を指定してください')
+ if a.wikimedia_user_page:
+  try: a.user_agent=build_user_agent(a.wikimedia_user_page)
+  except (ValueError, UnicodeError) as e: p.error(str(e))
+ elif not a.user_agent: p.error('--wikimedia-user-page で利用者ページURLを指定してください（Windowsでは起動.batを利用）')
  if not (1<=a.limit<=20 and 1<=a.queries<=10 and 1<=a.max_mb<=500): p.error('limit 1..20 / queries 1..10 / max-mb 1..500')
  run(a)
 if __name__=='__main__': main()

@@ -1,13 +1,35 @@
-# 大和噺｜歴史資料収集アプリ v0.2
+# 大和噺｜歴史資料収集アプリ v0.3
 
-YouTube制作向けの歴史資料調査・整理ツールです。字幕生成ツールから独立したPythonプロジェクトです。Windowsの操作画面から使えます。原稿や画像はGitHubへ送信しません。検索語とUser-Agentの連絡先はCommonsに送信します。
+YouTube制作向けの歴史資料調査・整理ツールです。字幕生成ツールから独立したPythonプロジェクトです。Windowsの操作画面から使えます。原稿や画像はGitHubへ送信しません。検索語とUser-Agentの利用者ページURLはCommonsに送信します。
+
+## v0.3：メール不要のUser-Agent設定
+
+**[Windows用v0.3 ZIPをダウンロード](https://github.com/etoryoabc-ai/yamato-material-collector/raw/refs/heads/main/downloads/yamato-material-collector-v0.3.zip)**
+
+v0.2のZIP・Git履歴は保持します。新しいZIPを別フォルダに展開し、`起動.bat` を開いてください。Python 3.10以降とTcl/Tkが必要です。batは従来と同じです。
+
+入力するURLの形：`https://commons.wikimedia.org/wiki/User:あなたの利用者名`。これは説明用です。自分の実際の利用者ページを使ってください。アカウント未作成ならCommonsでアカウントを作成し、利用者ページにこのツールの利用者であることなどを記載し、トークページで連絡を受け取れる状態にしてください。他人のページや存在しない名前を連絡先に指定しないでください。通常の使用に個人メールの入力は必要ありません。
+
+初期設定画面の **WikimediaユーザーページURL** に入力して「検索を開始」を押すと、`config/policy.json` の `wikimedia_user_page_url` に保存します。次回は自動で読み込みます。フォームで書き換えて再実行すると更新できます。日本語の利用者名は自動的にURLエンコードします。HTTPSの `/wiki/User:名前` と `/wiki/利用者:名前` に対応し、Commons・Meta・Wikipedia等のWikimedia公式ドメインを許可します。`index.php?title=...`、サブページ、フラグメント、任意の外部URLは受け付けません。URLの構文を確認する機能であり、ページの存在・本人所有・連絡可能性までは自動確認しません。
+
+[Wikimedia公式User-Agentポリシー](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy)（2026-10-30確認）に示されるアプリ名・バージョン・連絡先の形式で、次のHTTPヘッダーを送信します。
+
+```text
+User-Agent: YamatoMaterialsBot/0.3 (https://commons.wikimedia.org/wiki/User:実際の利用者名; https://github.com/etoryoabc-ai/yamato-material-collector)
+```
+
+上記は表示例です。実際の日本語URLはASCIIに変換されます。検索APIと画像取得の両方に同じUser-Agentを付与します。ブラウザのUser-Agentを偽装しません。公式ポリシーは連絡先としてWebサイトやWiki利用者情報も認めており、メールだけを必須としていません。形式が正しくても、接続制限やアクセス可否が解除されることを保証するものではありません。
+
+移行する場合はv0.2から `input/完成原稿.txt` と必要に応じ `config/review.json`、`config/policy.json` を**コピー**してください。旧版フォルダは残してください。従来の `contact` が利用者ページURLなら引き継ぎます。メールや一般URLの場合は欄を空にして再入力を求めます。新設定保存時に旧 `contact` を削除します。過去のログ・取得結果・旧版フォルダ内のメール記録を自動削除することはありません。設定ファイルはGit管理対象外です。
+
+開発者用CLIは `--wikimedia-user-page URL` を指定します。明示的な `--user-agent` 上級者オプションは残しますが、適切な連絡先を含める責任は利用者にあります。どちらも未指定なら通信前に終了します。
 
 ## Windowsで使う（コマンド入力不要）
 
 1. Python公式サイト https://www.python.org/downloads/windows/ からPython 3.10以降をインストールします。`Add python.exe to PATH` と Tcl/Tk（通常は標準選択）を有効にしてください。Python本体は同梱していません。
 2. 配布ZIPを右クリックして「すべて展開」。ZIP内から直接実行せず、書き込み可能なフォルダに置きます。
 3. `input` フォルダに、UTF-8形式で **完成原稿.txt** を保存します。Windowsの拡張子表示を有効にし、`.txt.txt` になっていないことを確認してください。
-4. **起動.bat** をダブルクリックします。初回は画面上のリンクからCommonsの再利用条件・API利用条件・User-Agent条件を読み、確認欄にチェックし、自分の連絡先URLまたはメールを入力します。
+4. **起動.bat** をダブルクリックします。初回は画面上のリンクからCommonsの再利用条件・API利用条件・User-Agent条件を読み、確認欄にチェックし、「WikimediaユーザーページURL」に、自分の利用者ページURLを入力します。個人のメールアドレスは不要です。
 5. 「検索を開始」を押します。次回から設定済み・原稿ありならbat起動時に自動検索し、過去に個別確認を登録済みの画像は自動取得します。未確認の画像は候補記録に留めます。
 6. 検索後「個別確認・見送りを登録」を開きます。候補の出典を開き、商用利用条件、必要クレジット、描写年代・内容、原資料か復元図かを確認して保存します。見送りも理由付きで保存できます。
 7. 「確認済み画像を取得」を押すと、再検索して条件を満たす画像だけ保存します。候補が前回の検索結果から消えた場合は取得されません。
@@ -66,12 +88,12 @@ GitHub Desktopでコマンド入力なしに保存できます。
 4. `Publish repository` で `yamato-material-collector` を指定。個人用ならPrivateを選びます。
 5. 以後、更新をコミットして `Push origin`。
 
-この配布物は既存字幕リポジトリを変更しません。GitHub上の新規リポジトリ作成・アップロードはまだ行っていません。原稿・画像・設定を公開しないよう、Publish前にChangesを確認してください。ソースの再配布ライセンスは未指定であり、取得画像のライセンスとは別です。
+この配布物は既存字幕リポジトリを変更しません。専用リポジトリは https://github.com/etoryoabc-ai/yamato-material-collector です。原稿・画像・設定を公開しないよう、Publish前にChangesを確認してください。ソースの再配布ライセンスは未指定であり、取得画像のライセンスとは別です。
 
 ## 開発・検証と制約
 
-開発者向け：`python -m unittest -v test_collector.py`。標準ライブラリのみです。GUIのデスクトップ操作とbatはWindowsでの実機確認が必要です。この環境はLinuxであり、Windows実機テストを実施したとは報告しません。
+開発者向け：`python -m unittest discover -v`。標準ライブラリのみです。GUIのデスクトップ操作とbatはWindowsでの実機確認が必要です。この環境はLinuxであり、Windows実機テストを実施したとは報告しません。
 
-従来のCLIも `collector.py` で利用できます。旧説明は `README_v0.md`。GUIはUTF-8入稿を想定し、他の文字コードでは変換して保存してください。原稿解析はルール方式、全自動の史実・権利判断ではありません。検索スナップショットからの再開、IIIF/TIFF/PDF、近似画像重複、Resolveタイムライン生成は未対応です。
+従来のCLIも `collector.py` で利用できます。旧説明は `README_v0.md` と `README_v0.2.md`。GUIはUTF-8入稿を想定し、他の文字コードでは変換して保存してください。原稿解析はルール方式、全自動の史実・権利判断ではありません。検索スナップショットからの再開、IIIF/TIFF/PDF、近似画像重複、Resolveタイムライン生成は未対応です。
 
-既存v0のフォルダとZIPは変更せず保存しました。今回のプロジェクトは新規フォルダです。クラウドのネットワーク制限によりライブ収集成功は未検証です。Windowsの実接続テストで確認してください。
+既存v0のフォルダとZIPは変更せず保存しました。v0.3は別フォルダへ展開して利用できます。クラウドのネットワーク制限によりライブ収集成功は未検証です。Windowsの実接続テストで確認してください。
