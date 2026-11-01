@@ -36,7 +36,7 @@ def browser_check(folder,require_images=True,minimum_images=1):
                     errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
                     page.goto(server.origin+'/'+urllib.parse.quote(snapshot.name)+'?token='+server.token,wait_until='load',timeout=25000)
                     page.wait_for_function("document.body.hasAttribute('data-card-count')",timeout=10000)
-                    if require_images:page.wait_for_function("(n)=>[...document.querySelectorAll('img.preview')].filter(i=>i.complete&&i.naturalWidth>0).length>=n",arg=minimum_images,timeout=15000)
+                    if require_images:page.wait_for_function("(n)=>[...document.querySelectorAll('img.preview')].filter(i=>i.complete&&i.naturalWidth>0).length>=n",arg=minimum_images,timeout=30000)
                     info={'browser':Path(browser).name,'engine':'Playwright','decoded_images':page.locator('img.preview').evaluate_all('(imgs)=>imgs.filter(i=>i.complete&&i.naturalWidth>0).length'),'rendered_cards':page.locator('.card').count(),'javascript_errors':errors}
                     (folder/'ブラウザ検証DOM.html').write_text(page.content(),encoding='utf-8')
                     page.screenshot(path=str(folder/'カタログ表示検証.png'),full_page=True)

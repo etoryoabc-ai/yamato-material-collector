@@ -8,7 +8,7 @@ import urllib.parse
 import urllib.robotparser
 from pathlib import Path
 from unittest.mock import Mock, patch
-from commons_source import CommonsSource, AccessDenied, request_kind, retry_delay, API
+from commons_source import CommonsSource, AccessDenied, LocalResourceDenied, request_kind, retry_delay, API
 
 AGENT='YamatoMaterialsBot/0.5 (https://github.com/etoryoabc-ai/yamato-material-collector)'
 URL=API+'?action=query&format=json&meta=siteinfo&maxlag=5'
@@ -87,6 +87,26 @@ class TransportTests(unittest.TestCase):
             (root/'9.png').unlink()
             result=validate_collection(root,m,10,compare=False)
             self.assertFalse(result['goal_met']);self.assertEqual(result['verified_original_files'],9)
+    def test_unavailable_thumbnail_robots_is_cached_not_repeated(self):
+        with tempfile.TemporaryDirectory() as tmp,patch('commons_source.time.sleep'):
+            source=CommonsSource(tmp,AGENT);source.opener=Mock();source.opener.open.side_effect=LocalResourceDenied('robots redirected to project homepage')
+            for _ in range(2):
+                with self.assertRaises(LocalResourceDenied):source.robot_rules('thumb.wikimedia.org')
+            self.assertEqual(source.opener.open.call_count,1)
+    def test_missing_thumbnail_policy_does_not_discard_valid_originals(self):
+        from test_assistant import FixtureSource,PNG
+        from material_assistant import collect,counts
+        import hashlib
+        class WithoutThumbs(FixtureSource):
+            def download(self,url,path):
+                if '/thumb/' in url:raise LocalResourceDenied('fixture robots unavailable')
+                p=Path(str(path)+'.png');p.parent.mkdir(parents=True,exist_ok=True);body=PNG+str(path).encode();p.write_bytes(body)
+                return p,hashlib.sha256(body).hexdigest()
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);s=root/'s.txt';s.write_text('江戸の玉川上水と木樋。',encoding='utf-8')
+            m=collect(s,root/'out','https://commons.wikimedia.org/wiki/User:Fixture',4,source_factory=WithoutThumbs,progress=lambda _:None,terms_confirmed=True)
+            self.assertEqual(counts(m)['downloaded'],3)
+            self.assertTrue(all(a['original'] for a in m['assets'].values() if a['rights']=='PD'))
     def test_standard_thumbnail_size(self):
         with tempfile.TemporaryDirectory() as tmp:
             source=CommonsSource(tmp,AGENT)

@@ -8,7 +8,7 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from scene_analysis import free_analysis, ai_analysis, allocate
-from commons_source import CommonsSource, AccessDenied, relevance
+from commons_source import CommonsSource, AccessDenied, LocalResourceDenied, relevance
 from user_agent import build_user_agent
 
 CLEAR={'PD','CC0','CC BY'}
@@ -115,6 +115,9 @@ def collect(script,out,user_page,target=100,mode='free',key='',model='gpt-4.1-mi
                 try:
                     thumb,_=source.download(a['thumbnail_url'],out/'サムネイル'/aid)
                     a['thumbnail']=str(thumb.relative_to(out)).replace('\\','/')
+                except LocalResourceDenied as e:
+                    a['thumbnail_status']='サムネイル未取得・取得済み原本を縮小表示'
+                    manifest['errors'].append(aid+' サムネイルのみ未取得（原本は保存済み）: '+str(e))
                 except AccessDenied as e:manifest['errors'].append(aid+' サムネイル取得を停止: '+str(e));break
                 except Exception as e:manifest['errors'].append(aid+' サムネイル: '+str(e))
         except AccessDenied as e:

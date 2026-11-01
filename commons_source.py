@@ -28,6 +28,10 @@ class Source(Protocol):
 
 class AccessDenied(RuntimeError):pass
 
+class LocalResourceDenied(AccessDenied):
+    """One unsupported resource/robots route; not an HTTP server refusal."""
+    pass
+
 
 def plain(value):
     return html.unescape(re.sub(r'<[^>]*>',' ',str(value))).strip() or UNKNOWN
@@ -71,7 +75,7 @@ def request_kind(url):
     if p.hostname in MEDIA_HOSTS and p.path.startswith('/wikipedia/commons/'):
         tracking=urllib.parse.parse_qsl(p.query,keep_blank_values=True)
         if all(k in {'utm_source','utm_campaign','utm_content','utm_medium','utm_term'} for k,v in tracking) and len({k for k,v in tracking})==len(tracking):return 'media'
-    raise AccessDenied('未許可のリソース用途: '+p.hostname+p.path)
+    raise LocalResourceDenied('未許可のリソース用途: '+p.hostname+p.path)
 
 class SafeRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,req,fp,code,msg,headers,newurl):
@@ -97,7 +101,7 @@ class CommonsSource:
     def __init__(self, evidence, agent, progress=lambda text:None, delay=1.1):
         self.evidence=Path(evidence);self.evidence.mkdir(parents=True,exist_ok=True)
         if not agent or any(ord(c)<32 for c in agent):raise ValueError('説明的なUser-Agentが必要')
-        self.agent=agent;self.progress=progress;self.delay=max(1.1,delay);self.last=0;self.next_allowed=0;self.robots={};self.log=[];self.halted=None
+        self.agent=agent;self.progress=progress;self.delay=max(1.1,delay);self.last=0;self.next_allowed=0;self.robots={};self.robot_errors={};self.log=[];self.halted=None
         self.opener=urllib.request.build_opener(SafeRedirect())
         (self.evidence/'アクセス方針.json').write_text(json.dumps({'version':'0.5','api':API,'api_scope':'action=query JSON: siteinfo or namespace 6 search + imageinfo only','api_guideline':POLICY,'robots_scope':'Media downloads, not website crawler preflight on documented Action API calls','user_agent':agent,'parallel_requests':1,'interval_seconds':self.delay,'slow_api_cooldown_seconds':5,'media_limit_bytes_per_second':2_000_000},ensure_ascii=False,indent=2),encoding='utf-8')
     def record(self,**fields):
@@ -155,8 +159,12 @@ class CommonsSource:
     def robot_rules(self,host):
         if host not in HOSTS:raise AccessDenied('robotsホスト不正')
         if host in self.robots:return self.robots[host]
+        if host in self.robot_errors:raise LocalResourceDenied(self.robot_errors[host])
         url='https://'+host+'/robots.txt';parser=urllib.robotparser.RobotFileParser(url)
         try:raw=self.fetch(url,500_000)
+        except LocalResourceDenied as e:
+            self.robot_errors[host]='robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: '+str(e)
+            raise LocalResourceDenied(self.robot_errors[host]) from None
         except urllib.error.HTTPError as e:
             if e.code==404:raw=b'User-agent: *\nAllow: /'
             else:raise
@@ -201,6 +209,7 @@ class CommonsSource:
     def download(self,url,path):
         if not safe_url(url,MEDIA_HOSTS):raise AccessDenied('画像ホストを検証できません')
         try:data=self.fetch(url,80*1024*1024)
+        except LocalResourceDenied as e:raise LocalResourceDenied(str(e)+' [画像URL: '+url+']') from None
         except AccessDenied as e:raise AccessDenied(str(e)+' [画像URL: '+url+']') from None
         ext='.jpg' if data.startswith(b'\xff\xd8\xff') else '.png' if data.startswith(b'\x89PNG\r\n\x1a\n') else ''
         if not ext:raise ValueError('原本形式がJPEG/PNGではありません（変換しません）')
