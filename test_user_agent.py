@@ -36,7 +36,7 @@ class UserAgentTests(unittest.TestCase):
    saved=save_policy(path,{'contact':'old@example.com','commons_api_terms_reviewed':True},URL)
    reloaded=json.loads(path.read_text(encoding='utf-8'))
    self.assertEqual(reloaded,saved); self.assertEqual(saved_user_page(reloaded),URL)
-   self.assertNotIn('contact',reloaded); self.assertNotIn('old@example.com',path.read_text())
+   self.assertNotIn('contact',reloaded); self.assertNotIn('old@example.com',path.read_text(encoding='utf-8'))
    self.assertTrue(reloaded['commons_api_terms_reviewed'])
  def test_legacy_url_migration_email_not_reused(self):
   self.assertEqual(saved_user_page({'contact':URL}),URL)

@@ -64,7 +64,7 @@ class AssistantTests(unittest.TestCase):
             scenes=ai_analysis(text,'secret-fixture-key','gpt-4.1-mini',temp)
             sent=json.loads(opener.call_args.args[0].data)
             self.assertFalse(sent['store']);self.assertTrue(sent['text']['format']['strict'])
-            self.assertIn('AI推定',scenes[0]['analysis']);self.assertNotIn('secret-fixture-key',next(Path(temp).glob('*.json')).read_text())
+            self.assertIn('AI推定',scenes[0]['analysis']);self.assertNotIn('secret-fixture-key',next(Path(temp).glob('*.json')).read_text(encoding='utf-8'))
     def test_license_conflicts_and_missing_credit(self):
         self.assertEqual(asset(1)['rights'],'PD')
         self.assertEqual(classify({'LicenseShortName':{'value':'Public domain'}},PAGE)[0],'要確認')
@@ -88,9 +88,9 @@ class AssistantTests(unittest.TestCase):
         class Down(FixtureSource):
             def probe(self):raise AccessDenied('fixture policy deny')
         with tempfile.TemporaryDirectory() as temp:
-            root=Path(temp);s=root/'s.txt';s.write_text('江戸の上水道。')
+            root=Path(temp);s=root/'s.txt';s.write_text('江戸の上水道。',encoding='utf-8')
             m=collect(s,root/'out','https://commons.wikimedia.org/wiki/User:Fixture',100,source_factory=Down,progress=lambda _:None,terms_confirmed=True)
-            self.assertEqual(counts(m)['downloaded'],0);self.assertIn('全体不足: 100', (root/'out/収集レポート.md').read_text())
+            self.assertEqual(counts(m)['downloaded'],0);self.assertIn('全体不足: 100', (root/'out/収集レポート.md').read_text(encoding='utf-8'))
             self.assertTrue((root/'out/素材カタログ.html').exists())
     @unittest.skipUnless(shutil.which('node'),'Nodeがある開発環境でJavaScript構文を検証')
     def test_catalog_javascript_syntax(self):
@@ -103,11 +103,11 @@ class AssistantTests(unittest.TestCase):
     def test_metadata_cannot_inject_script(self):
         with tempfile.TemporaryDirectory() as temp:
             render_catalog(temp,{'title':'</script><script>alert(1)</script>'})
-            text=Path(temp,'素材カタログ.html').read_text()
+            text=Path(temp,'素材カタログ.html').read_text(encoding='utf-8')
             self.assertNotIn('</script><script>alert(1)',text);self.assertIn('\\u003c/script',text)
     def test_server_persists_and_denies_untrusted_posts(self):
         with tempfile.TemporaryDirectory() as temp:
-            root=Path(temp);s=root/'s.txt';s.write_text('江戸の上水道。')
+            root=Path(temp);s=root/'s.txt';s.write_text('江戸の上水道。',encoding='utf-8')
             m=collect(s,root/'out','https://commons.wikimedia.org/wiki/User:Fixture',1,source_factory=FixtureSource,progress=lambda _:None,terms_confirmed=True)
             server=CatalogServer(root/'out')
             try:
@@ -118,7 +118,7 @@ class AssistantTests(unittest.TestCase):
                 with self.assertRaises(urllib.error.HTTPError):opener.open(req)
                 req=urllib.request.Request(server.origin+'/api/choice',data=body,headers={'Content-Type':'application/json','Origin':server.origin,'X-Catalog-Token':server.token})
                 with opener.open(req) as r:self.assertTrue(json.load(r)['saved'])
-                self.assertEqual(json.loads((root/'out/catalog.json').read_text())['choices'][link],'採用')
+                self.assertEqual(json.loads((root/'out/catalog.json').read_text(encoding='utf-8'))['choices'][link],'採用')
                 req=urllib.request.Request(server.origin+'/api/export',data=b'{}',headers={'Content-Type':'application/json','Origin':server.origin,'X-Catalog-Token':server.token})
                 with opener.open(req) as r:self.assertEqual(json.load(r)['copied'],1)
                 # No traversal or raw manuscript/metadata serving.
