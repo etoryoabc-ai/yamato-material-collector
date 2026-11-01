@@ -4,7 +4,7 @@ import re
 import urllib.parse
 from pathlib import Path
 
-VERSION = '0.3'
+VERSION = '0.4'
 POLICY_URL = 'https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy'
 PROJECT_URL = 'https://github.com/etoryoabc-ai/yamato-material-collector'
 HOST_PATTERN = re.compile(r'(?:[a-z0-9-]+\.)+(?:wikimedia\.org|wikipedia\.org|wiktionary\.org|wikibooks\.org|wikinews\.org|wikiquote\.org|wikisource\.org|wikiversity\.org|wikivoyage\.org)|(?:www\.)?(?:wikidata\.org|mediawiki\.org)')

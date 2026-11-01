@@ -1,0 +1,17 @@
+[
+  {
+    "url": "https://commons.wikimedia.org/robots.txt",
+    "status": "失敗",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&meta=siteinfo",
+    "status": "失敗",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  {
+    "url": "https://upload.wikimedia.org/robots.txt",
+    "status": "失敗",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  }
+]
