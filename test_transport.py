@@ -45,6 +45,8 @@ class TransportTests(unittest.TestCase):
             source=CommonsSource(tmp,AGENT);source.opener=Mock();source.opener.open.side_effect=urllib.error.HTTPError(URL,403,'Forbidden',{},None)
             with self.assertRaises(AccessDenied):source.probe()
             self.assertEqual(source.opener.open.call_count,1)
+            with self.assertRaises(AccessDenied):source.fetch('https://upload.wikimedia.org/wikipedia/commons/a/ab/example.jpg')
+            self.assertEqual(source.opener.open.call_count,1)
     def test_retry_after_bounded_and_no_retry_before_delay(self):
         with tempfile.TemporaryDirectory() as tmp,patch('commons_source.time.sleep') as sleeper:
             source=CommonsSource(tmp,AGENT);source.opener=Mock()

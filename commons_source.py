@@ -68,7 +68,7 @@ def request_kind(url):
             return 'action-api'
         raise AccessDenied('検索・画像メタデータ以外のAPI要求を拒否')
     if p.hostname=='upload.wikimedia.org' and p.path.startswith('/wikipedia/commons/') and not p.query:return 'media'
-    raise AccessDenied('Webページ巡回・任意の/w/アクセスは実装対象外')
+    raise AccessDenied('未許可のリソース用途: '+p.hostname+p.path)
 
 class SafeRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,req,fp,code,msg,headers,newurl):
@@ -94,14 +94,17 @@ class CommonsSource:
     def __init__(self, evidence, agent, progress=lambda text:None, delay=1.1):
         self.evidence=Path(evidence);self.evidence.mkdir(parents=True,exist_ok=True)
         if not agent or any(ord(c)<32 for c in agent):raise ValueError('説明的なUser-Agentが必要')
-        self.agent=agent;self.progress=progress;self.delay=max(1.1,delay);self.last=0;self.next_allowed=0;self.robots={};self.log=[]
+        self.agent=agent;self.progress=progress;self.delay=max(1.1,delay);self.last=0;self.next_allowed=0;self.robots={};self.log=[];self.halted=None
         self.opener=urllib.request.build_opener(SafeRedirect())
         (self.evidence/'アクセス方針.json').write_text(json.dumps({'version':'0.5','api':API,'api_scope':'action=query JSON: siteinfo or namespace 6 search + imageinfo only','api_guideline':POLICY,'robots_scope':'Media downloads, not website crawler preflight on documented Action API calls','user_agent':agent,'parallel_requests':1,'interval_seconds':self.delay,'slow_api_cooldown_seconds':5,'media_limit_bytes_per_second':2_000_000},ensure_ascii=False,indent=2),encoding='utf-8')
     def record(self,**fields):
         with (self.evidence/'通信ログ.jsonl').open('a',encoding='utf-8') as f:
             f.write(json.dumps({'at':datetime.now(timezone.utc).isoformat(),**fields},ensure_ascii=False)+'\n')
     def fetch(self,url,limit=5_000_000):
-        kind=request_kind(url)
+        if self.halted:raise AccessDenied(self.halted)
+        try:kind=request_kind(url)
+        except AccessDenied as e:
+            self.record(url=url,status='local_url_denied',error=str(e));raise
         if kind=='media':
             parser=self.robot_rules('upload.wikimedia.org')
             if not parser.can_fetch('YamatoMaterialsBot',url):
@@ -131,10 +134,14 @@ class CommonsSource:
                 return body
             except urllib.error.HTTPError as e:
                 self.record(kind=kind,url=url,status='http_error',http_status=e.code,retry_after=e.headers.get('Retry-After',''),attempt=attempt+1)
-                if e.code in (401,403):raise AccessDenied(f'HTTP {e.code}: サーバーが拒否。停止（別経路・UA変更で再試行しない）') from None
+                if e.code in (401,403):
+                    self.halted=f'HTTP {e.code}: サーバーが拒否。停止（別経路・UA変更で再試行しない）'
+                    raise AccessDenied(self.halted) from None
                 if e.code in (429,503):
                     wait=retry_delay(e.headers.get('Retry-After',''),attempt)
-                    if attempt==2 or wait>30:raise AccessDenied(f'HTTP {e.code}: {wait:.0f}秒以上待機が必要。今回は停止し後で再実行') from None
+                    if attempt==2 or wait>30:
+                        self.halted=f'HTTP {e.code}: {wait:.0f}秒以上待機が必要。今回は停止し後で再実行'
+                        raise AccessDenied(self.halted) from None
                     self.progress(f'HTTP {e.code}: {wait:.0f}秒待機');time.sleep(wait);continue
                 if e.code>=500:raise AccessDenied(f'HTTP {e.code}: サーバー障害のため停止') from None
                 raise
@@ -190,7 +197,8 @@ class CommonsSource:
         return records
     def download(self,url,path):
         if not safe_url(url,{'upload.wikimedia.org'}):raise AccessDenied('画像ホストを検証できません')
-        data=self.fetch(url,80*1024*1024)
+        try:data=self.fetch(url,80*1024*1024)
+        except AccessDenied as e:raise AccessDenied(str(e)+' [画像URL: '+url+']') from None
         ext='.jpg' if data.startswith(b'\xff\xd8\xff') else '.png' if data.startswith(b'\x89PNG\r\n\x1a\n') else ''
         if not ext:raise ValueError('原本形式がJPEG/PNGではありません（変換しません）')
         p=Path(str(path)+ext);p.parent.mkdir(parents=True,exist_ok=True)

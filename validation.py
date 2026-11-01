@@ -1,6 +1,7 @@
 """Real file verification and v0.3 wire-shape comparison; no dummy fallback."""
 import hashlib
 import json
+import time
 from pathlib import Path
 from commons_source import CommonsSource
 from material_assistant import counts, write_json
@@ -21,6 +22,8 @@ def validate_collection(folder,m,goal=10,compare=True):
     stop=any(any(token in e for token in ['HTTP 401','HTTP 403','HTTP 429','HTTP 503','アクセス停止','API maxlag','API ratelimited','中止']) for e in m['errors'])
     if compare and m['network'].get('status')=='API応答成功' and not stop and policy_path.exists():
         try:
+            # A fresh comparison client must also honor any preceding slow-API cooldown.
+            time.sleep(5)
             agent=json.loads(policy_path.read_text(encoding='utf-8'))['user_agent']
             source=CommonsSource(folder/'証跡',agent)
             response=source.query({'generator':'search','gsrsearch':'Edo map','gsrnamespace':6,'gsrlimit':10,'prop':'imageinfo','iiprop':'url|size|extmetadata|sha1'})
