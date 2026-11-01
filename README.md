@@ -7,7 +7,7 @@
 
 ## v0.5で修正した停止原因
 
-v0.4は、Webページ巡回のrobots判定を正式なAction APIリクエストにも同一にかけ、HTTP要求前に停止していました。v0.5は公開されたAction APIの利用規則に従う専用クライアントとして、**固定エンドポイントの読み取り専用JSON検索・画像情報取得だけ**を処理します。HTML巡回、編集API、任意の `/w/` URLへのアクセスは拒否します。画像配信先のrobots判定と、サーバーの実際の拒否・待機指示は引き続き適用します。詳細は `調査_APIとrobots.md` に比較と公式資料を記載しました。
+v0.4は、Webページ巡回のrobots判定を正式なAction APIリクエストにも同一にかけ、HTTP要求前に停止していました。v0.5は公開されたAction APIの利用規則に従う専用クライアントとして、**固定エンドポイントの読み取り専用JSON検索・画像情報取得だけ**を処理します。HTML巡回、編集API、任意の `/w/` URLへのアクセスは拒否します。画像配信先のrobots判定と、サーバーの実際の拒否・待機指示は引き続き適用します。APIが画像URLへ付与する `utm_source` 等の追跡パラメータを画像取得として扱い、HTML巡回と誤判定しないようにしました。詳細は `調査_APIとrobots.md` に比較と公式資料を記載しました。
 
 クラウドの接続テストはプロキシ403で原本0枚。Windowsの10枚取得検証を別途実行し、実測結果を `検証結果.md` に記録します。検索成功だけでは画像取得成功とはしません。
 
@@ -133,7 +133,7 @@ GitHub ActionsにはWindowsでの単体テストと実画像のsmokeテストを
 
 ## 接続条件・アクセス制御
 
-必要ホスト：`commons.wikimedia.org`、`upload.wikimedia.org`。公式条件確認に `www.mediawiki.org`、`foundation.wikimedia.org`、`creativecommons.org` 等。有料AIを選んだ場合だけ `api.openai.com` が必要です。
+必要ホスト：`commons.wikimedia.org`、`upload.wikimedia.org`、`thumb.wikimedia.org`。公式条件確認に `www.mediawiki.org`、`foundation.wikimedia.org`、`creativecommons.org` 等。有料AIを選んだ場合だけ `api.openai.com` が必要です。
 
 公開APIのみを使い、資料HTMLをスクレイピングしません。原本はAPIが返した画像URLだけを許可します。HTTPS・TLS検証・通常のプロキシ設定を維持し、ログイン・アクセス制限を回避しません。API呼び出しは固定エンドポイントと許可した読み取りパラメータだけを受け付けます。画像URLにはrobots.txtを取得して禁止対象を拒否し、取得不能なら画像を自動取得しません。Crawl-delay/Request-rateを反映し、通常は逐次1.1秒以上間隔、maxlag=5。1秒超のAPI応答後は次の要求まで5秒待ちます。API/robotsにgzipを要求し、メディアは2,000,000 bytes/秒以下に制限します。429/503/maxlagは限定回数の待機再試行、長いRetry-Afterは停止して再実行を案内します。401/403は回避せず停止。ネットワーク失敗時も空のカタログとレポートを作ります（原稿解析自体が失敗した場合はログに記録して終了）。
 

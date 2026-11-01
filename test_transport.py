@@ -26,6 +26,10 @@ class TransportTests(unittest.TestCase):
         self.assertEqual(request_kind(API+'?'+urllib.parse.urlencode(q)),'action-api')
         for invalid in [URL+'&prop=revisions',URL+'&action=edit',API+'?action=parse&format=json&page=X','https://commons.wikimedia.org/w/index.php?title=X','https://commons.wikimedia.org/wiki/Main_Page','https://evil.example/w/api.php?action=query&format=json&meta=siteinfo']:
             with self.subTest(url=invalid),self.assertRaises(AccessDenied):request_kind(invalid)
+    def test_api_returned_media_tracking_parameters_are_not_html_queries(self):
+        for host in ['upload.wikimedia.org','thumb.wikimedia.org']:
+            self.assertEqual(request_kind('https://'+host+'/wikipedia/commons/6/6b/Map.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original'),'media')
+        with self.assertRaises(AccessDenied):request_kind('https://upload.wikimedia.org/wikipedia/commons/6/6b/Map.png?action=edit')
     def test_api_uses_profile_not_robots_preflight_and_preserves_ua(self):
         with tempfile.TemporaryDirectory() as tmp,patch('commons_source.time.sleep'):
             source=CommonsSource(tmp,AGENT);source.opener=Mock();source.opener.open.return_value=Response(gzip.compress(b'{"query":{"general":{"sitename":"fixture"}}}'),{'Content-Encoding':'gzip'})

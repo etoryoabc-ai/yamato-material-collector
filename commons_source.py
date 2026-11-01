@@ -17,7 +17,8 @@ from typing import Protocol
 
 UNKNOWN='不明'
 API='https://commons.wikimedia.org/w/api.php'
-HOSTS={'commons.wikimedia.org','upload.wikimedia.org'}
+MEDIA_HOSTS={'upload.wikimedia.org','thumb.wikimedia.org'}
+HOSTS={'commons.wikimedia.org',*MEDIA_HOSTS}
 POLICY='https://wikitech.wikimedia.org/wiki/Robot_policy#Action_API_rules'
 
 class Source(Protocol):
@@ -67,7 +68,9 @@ def request_kind(url):
             and q.get('iiurlwidth','330') in ('250','330','500') and q.get('iiextmetadatalanguage','ja') in ('ja','en')):
             return 'action-api'
         raise AccessDenied('検索・画像メタデータ以外のAPI要求を拒否')
-    if p.hostname=='upload.wikimedia.org' and p.path.startswith('/wikipedia/commons/') and not p.query:return 'media'
+    if p.hostname in MEDIA_HOSTS and p.path.startswith('/wikipedia/commons/'):
+        tracking=urllib.parse.parse_qsl(p.query,keep_blank_values=True)
+        if all(k in {'utm_source','utm_campaign','utm_content','utm_medium','utm_term'} for k,v in tracking) and len({k for k,v in tracking})==len(tracking):return 'media'
     raise AccessDenied('未許可のリソース用途: '+p.hostname+p.path)
 
 class SafeRedirect(urllib.request.HTTPRedirectHandler):
@@ -106,7 +109,7 @@ class CommonsSource:
         except AccessDenied as e:
             self.record(url=url,status='local_url_denied',error=str(e));raise
         if kind=='media':
-            parser=self.robot_rules('upload.wikimedia.org')
+            parser=self.robot_rules(urllib.parse.urlsplit(url).hostname)
             if not parser.can_fetch('YamatoMaterialsBot',url):
                 self.record(kind=kind,url=url,status='local_media_robots_denied')
                 raise AccessDenied('画像URLがrobots.txtにより取得対象外')
@@ -196,7 +199,7 @@ class CommonsSource:
             except (KeyError,ValueError,TypeError) as e:self.record(kind='metadata',status='invalid_record',pageid=p.get('pageid'),error=str(e))
         return records
     def download(self,url,path):
-        if not safe_url(url,{'upload.wikimedia.org'}):raise AccessDenied('画像ホストを検証できません')
+        if not safe_url(url,MEDIA_HOSTS):raise AccessDenied('画像ホストを検証できません')
         try:data=self.fetch(url,80*1024*1024)
         except AccessDenied as e:raise AccessDenied(str(e)+' [画像URL: '+url+']') from None
         ext='.jpg' if data.startswith(b'\xff\xd8\xff') else '.png' if data.startswith(b'\x89PNG\r\n\x1a\n') else ''
@@ -230,7 +233,7 @@ def metadata(page):
     credit=' / '.join(x for x in [v('Artist'),title,v('Credit'),v('Attribution'),v('LicenseShortName'),license_url,source,'原本無改変（編集時は変更内容の表示を確認）'] if x and x!=UNKNOWN)
     return {'id':'WC'+str(page['pageid']),'title':title,'institution':v('Institution'),'artist':v('Artist'),'date':v('DateTimeOriginal'),
       'description':v('ImageDescription'),'object_type':v('ObjectType'),'source':source,'original_url':safe_url(i.get('url',''),{'upload.wikimedia.org'}),
-      'thumbnail_url':safe_url(i.get('thumburl',''),{'upload.wikimedia.org'}),'license':v('LicenseShortName'),'license_url':license_url,
+      'thumbnail_url':safe_url(i.get('thumburl',''),MEDIA_HOSTS),'license':v('LicenseShortName'),'license_url':license_url,
       'credit':credit,'rights':rights,'conditions':conditions,'sha1':i.get('sha1',''),'width':i.get('width',0),'height':i.get('height',0),
       'mime':i.get('mime',UNKNOWN),'original':'','thumbnail':'','download_status':'未取得','history_status':'未確認','kind':'不明（APIの資料種別を参照）','evidence':'Commons APIメタデータ（内容の真偽・権利の最終確認ではない）'}
 
