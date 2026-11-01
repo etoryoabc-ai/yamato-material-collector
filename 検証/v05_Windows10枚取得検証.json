@@ -1,0 +1,62 @@
+{
+  "version": "0.5",
+  "date": "2026-11-01",
+  "tested_commit": "6e8066c39d2d95419e88232399b86ccb1226a22c",
+  "run_id": 41272354314,
+  "run_url": "https://github.com/etoryoabc-ai/yamato-material-collector/actions/runs/41272354314",
+  "unit_tests": {
+    "count": 37,
+    "result": "success"
+  },
+  "real_media": {
+    "download_goal": 10,
+    "counts": {
+      "discovered": 182,
+      "candidates": 25,
+      "downloaded": 10,
+      "license_classified": 19,
+      "needs_review": 6,
+      "legal_historical_final_verified": 0
+    },
+    "verified_original_files": 10,
+    "goal_met": true,
+    "network": {
+      "status": "API応答成功",
+      "site": "Wikimedia Commons"
+    },
+    "errors": [
+      "WC31562443 サムネイルのみ未取得（原本は保存済み）: robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: 未許可のリソース用途: commons.wikimedia.org/ [画像URL: https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/Map_of_Bush%C5%AB_Toshima_District%2C_Edo_WDL9931.png/330px-Map_of_Bush%C5%AB_Toshima_District%2C_Edo_WDL9931.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail]",
+      "WC95641432 サムネイルのみ未取得（原本は保存済み）: robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: 未許可のリソース用途: commons.wikimedia.org/ [画像URL: https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Nihonbashi-Fish-Market-Prosperity-Ukiyoe-Utagawa-Kuniyasu.png/330px-Nihonbashi-Fish-Market-Prosperity-Ukiyoe-Utagawa-Kuniyasu.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail]",
+      "WC24378813 サムネイルのみ未取得（原本は保存済み）: robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: 未許可のリソース用途: commons.wikimedia.org/ [画像URL: https://thumb.wikimedia.org/wikipedia/commons/thumb/4/43/Pig_Food-_Women%27s_Voluntary_Service_Collects_Salvaged_Kitchen_Waste%2C_East_Barnet%2C_Hertfordshire%2C_England%2C_1943_D14248.jpg/330px-Pig_Food-_Women%27s_Voluntary_Service_Collects_Salvaged_Kitchen_Waste%2C_East_Barnet%2C_Hertfordshire%2C_England%2C_1943_D14248.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail]",
+      "WC4811914 サムネイルのみ未取得（原本は保存済み）: robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: 未許可のリソース用途: commons.wikimedia.org/ [画像URL: https://thumb.wikimedia.org/wikipedia/commons/thumb/9/94/Edo_P2.jpg/330px-Edo_P2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail]",
+      "WC14686342 サムネイルのみ未取得（原本は保存済み）: robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: 未許可のリソース用途: commons.wikimedia.org/ [画像URL: https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/1849_Edo_Period_Japanese_Woodcut_Map_of_Edo_or_Tokyo_Japan_-_Geographicus_-_Edo-japan-1849.jpg/330px-1849_Edo_Period_Japanese_Woodcut_Map_of_Edo_or_Tokyo_Japan_-_Geographicus_-_Edo-japan-1849.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail]",
+      "WC109848985 サムネイルのみ未取得（原本は保存済み）: robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: 未許可のリソース用途: commons.wikimedia.org/ [画像URL: https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fd/Edo_Meisho_Zue_01_Ochanomizu_Suidobashi.jpg/330px-Edo_Meisho_Zue_01_Ochanomizu_Suidobashi.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail]",
+      "WC195266965 サムネイルのみ未取得（原本は保存済み）: robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: 未許可のリソース用途: commons.wikimedia.org/ [画像URL: https://thumb.wikimedia.org/wikipedia/commons/thumb/7/71/Nihon_bashi_%28IA_mma_nihon_bashi_37195%29.jpg/330px-Nihon_bashi_%28IA_mma_nihon_bashi_37195%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail]",
+      "WC76412796 サムネイルのみ未取得（原本は保存済み）: robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: 未許可のリソース用途: commons.wikimedia.org/ [画像URL: https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5b/Actor_Arashi_Kichisabur%C3%B4_III_as_a_Firefighter.jpg/330px-Actor_Arashi_Kichisabur%C3%B4_III_as_a_Firefighter.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail]",
+      "WC14690821 サムネイルのみ未取得（原本は保存済み）: robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: 未許可のリソース用途: commons.wikimedia.org/ [画像URL: https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/1849_Japanese_Map_of_Edo_or_Tokyo%2C_Japan_-_Geographicus_-_Edo-tokyo-1849.jpg/330px-1849_Japanese_Map_of_Edo_or_Tokyo%2C_Japan_-_Geographicus_-_Edo-tokyo-1849.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail]",
+      "WC7631063 サムネイルのみ未取得（原本は保存済み）: robotsの確認経路を解決できないため、このホストのサムネイルは取得しません: 未許可のリソース用途: commons.wikimedia.org/ [画像URL: https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8f/%E6%B0%B4%E9%81%93%E6%A9%8B.jpg/330px-%E6%B0%B4%E9%81%93%E6%A9%8B.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail]"
+    ],
+    "v03_comparison": {
+      "status": "API応答成功",
+      "query": "Edo map",
+      "limit": 10,
+      "user_report_v03_candidates": 10,
+      "note": "ユーザー報告のv0.3成功10件は受領情報。以下の実測結果と区別する。",
+      "measured_candidates": 10,
+      "route": "v0.3と同じaction=query / generator=search / prop=imageinfo"
+    }
+  },
+  "browser": {
+    "browser": "msedge.exe",
+    "engine": "Playwright",
+    "decoded_images": 10,
+    "rendered_cards": 25,
+    "javascript_errors": []
+  },
+  "artifact": {
+    "id": 13069668237,
+    "url": "https://github.com/etoryoabc-ai/yamato-material-collector/actions/runs/41272354314/artifacts/13069668237",
+    "note": "Full verified_files (SHA256/source/license) and screenshot are in this artifact."
+  },
+  "scope": "Automated Windows CI verification; not manual operation on the user's own PC. Copyright/historical final verification remains incomplete."
+}
