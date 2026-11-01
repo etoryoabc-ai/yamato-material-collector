@@ -1,0 +1,31 @@
+{
+  "version": "0.5",
+  "download_goal": 10,
+  "counts": {
+    "discovered": 0,
+    "candidates": 0,
+    "downloaded": 0,
+    "license_classified": 0,
+    "needs_review": 0,
+    "legal_historical_final_verified": 0
+  },
+  "verified_original_files": 0,
+  "goal_met": false,
+  "verified_files": [],
+  "file_errors": [],
+  "network": {
+    "status": "接続失敗",
+    "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+  },
+  "errors": [
+    "API接続: <urlopen error Tunnel connection failed: 403 Forbidden>"
+  ],
+  "v03_comparison": {
+    "status": "未実行",
+    "query": "Edo map",
+    "limit": 10,
+    "user_report_v03_candidates": 10,
+    "note": "ユーザー報告のv0.3成功10件は受領情報。以下の実測結果と区別する。"
+  },
+  "browser_verified": false
+}

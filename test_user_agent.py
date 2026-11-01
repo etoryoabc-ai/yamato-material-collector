@@ -12,7 +12,7 @@ URL='https://commons.wikimedia.org/wiki/User:YamatoExample'
 class UserAgentTests(unittest.TestCase):
  def test_descriptive_user_agent_no_email(self):
   agent=build_user_agent(URL)
-  self.assertEqual(agent,'YamatoMaterialsBot/0.4 ('+URL+'; https://github.com/etoryoabc-ai/yamato-material-collector)')
+  self.assertEqual(agent,'YamatoMaterialsBot/0.5 ('+URL+'; https://github.com/etoryoabc-ai/yamato-material-collector)')
   self.assertNotIn('@',agent)
  def test_japanese_url_and_parentheses_are_ascii(self):
   url=normalize_user_page('https://commons.wikimedia.org/wiki/利用者:大和(噺)')

@@ -12,12 +12,13 @@ from tkinter import ttk, filedialog, messagebox
 from user_agent import normalize_user_page, saved_user_page, save_policy, POLICY_URL
 from material_assistant import collect, counts
 from catalog_app import CatalogServer, import_choices
+from validation import validate_collection
 
 ROOT=Path(__file__).resolve().parent
 
 class App:
     def __init__(self,test=False):
-        self.root=tk.Tk();self.root.title('大和噺｜原稿連動 映像素材アシスタント v0.4');self.root.geometry('850x790')
+        self.root=tk.Tk();self.root.title('大和噺｜原稿連動 映像素材アシスタント v0.5');self.root.geometry('850x790')
         for name in ('input','config','results','logs'):(ROOT/name).mkdir(exist_ok=True)
         try:self.policy=json.loads((ROOT/'config/policy.json').read_text(encoding='utf-8'))
         except (OSError,ValueError):self.policy={}
@@ -50,7 +51,7 @@ class App:
         ttk.Button(ai,text='公式API料金・モデルを確認',command=lambda:webbrowser.open('https://developers.openai.com/api/docs/pricing')).pack(anchor='w',pady=5)
         row=ttk.Frame(frame);row.pack(fill='x',pady=8)
         self.start_button=ttk.Button(row,text='素材収集開始',command=lambda:self.start(False));self.start_button.pack(side='left',padx=4)
-        self.test_button=ttk.Button(row,text='江戸・実画像収集テスト',command=lambda:self.start(True));self.test_button.pack(side='left',padx=4)
+        self.test_button=ttk.Button(row,text='江戸・10枚取得テスト',command=lambda:self.start(True));self.test_button.pack(side='left',padx=4)
         ttk.Button(row,text='中止',command=self.cancel.set).pack(side='left',padx=4)
         ttk.Button(row,text='過去のカタログを開く',command=self.open_previous).pack(side='left',padx=4)
         row=ttk.Frame(frame);row.pack(fill='x',pady=3)
@@ -59,7 +60,7 @@ class App:
         self.status=tk.StringVar(value='準備完了。初回だけ利用者ページと条件を設定してください。');ttk.Label(frame,textvariable=self.status,wraplength=790).pack(anchor='w',pady=10)
         self.log=tk.Text(frame,height=10,wrap='word');self.log.pack(fill='both',expand=True)
         self.root.protocol('WM_DELETE_WINDOW',self.close);self.root.after(150,self.poll)
-        if test:self.root.after(500,lambda:messagebox.showinfo('実画像テスト','初回設定を確認し「江戸・実画像収集テスト」を押してください。テストは無料ルール解析・目標12枚で実行します。'))
+        if test:self.root.after(500,lambda:messagebox.showinfo('実画像テスト','初回設定を確認し「江戸・10枚取得テスト」を押してください。テストは無料ルール解析・原本10枚を目標で実行します。'))
         self.root.mainloop()
     def pick(self):
         path=filedialog.askopenfilename(filetypes=[('UTF-8 原稿','*.txt')])
@@ -71,7 +72,7 @@ class App:
             contact=normalize_user_page(self.contact.get());target=int(self.target.get())
             if not 1<=target<=500:raise ValueError('目標枚数は1〜500です')
             script=Path(self.script.get());mode='free' if test or self.mode.get().startswith('無料') else 'ai'
-            if test:script=ROOT/'examples/江戸_テスト原稿.txt';target=12
+            if test:script=ROOT/'examples/江戸_10枚取得テスト.txt';target=25
             if not script.is_file():raise ValueError('完成原稿.txtを指定してください（UTF-8）')
             if mode=='ai' and not self.paid.get():raise ValueError('AI設定で原稿送信と課金の確認欄を選んでください')
             key=(self.key.get().strip() or os.environ.get('OPENAI_API_KEY','')) if mode=='ai' else ''
@@ -84,7 +85,8 @@ class App:
         self.busy=True;self.cancel.clear();self.start_button.config(state='disabled');self.test_button.config(state='disabled');self.log.delete('1.0','end');self.status.set('収集中。進捗を確認できます。')
         def worker():
             try:
-                result=collect(script,out,contact,target,mode,key,model,lambda text:self.events.put(('progress',text)),self.cancel,terms_confirmed=True)
+                result=collect(script,out,contact,target,mode,key,model,lambda text:self.events.put(('progress',text)),self.cancel,terms_confirmed=True,download_limit=10 if test else None)
+                if test:result['test_validation']=validate_collection(out,result,10)
                 self.events.put(('done',(out,result)))
             except Exception as e:
                 (ROOT/'logs'/('error_'+datetime.now().strftime('%Y%m%d_%H%M%S')+'.txt')).write_text(type(e).__name__+': '+str(e),encoding='utf-8')
@@ -101,13 +103,15 @@ class App:
                         out,m=value;self.latest=out;c=counts(m)
                         self.status.set(f'発見 {c["discovered"]} / 関連候補 {c["candidates"]} / 原本取得 {c["downloaded"]} / 条件分類可(API) {c["license_classified"]}。最終確認は未了。')
                         for e in m['errors']:self.log.insert('end','記録: '+e+'\n')
+                        if '10枚取得テスト' in out.name:
+                            self.status.set(self.status.get()+(' 10枚取得目標達成。' if m.get('test_validation',{}).get('goal_met',False) else ' 10枚取得目標未達。成功扱いにしません。'))
                         self.open_catalog(out)
                     else:self.status.set('実行失敗（無料方式へ無断切替なし）');self.log.insert('end',value+'\n');messagebox.showerror('実行失敗',value)
         except queue.Empty:pass
         self.root.after(150,self.poll)
     def open_catalog(self,folder):
         try:
-            if not Path(folder,'catalog.json').is_file():raise ValueError('v0.4のcatalog.jsonがある結果フォルダを選んでください')
+            if not Path(folder,'catalog.json').is_file():raise ValueError('v0.5のcatalog.jsonがある結果フォルダを選んでください')
             server=CatalogServer(folder);self.servers.append(server);webbrowser.open(server.url)
         except Exception as e:messagebox.showerror('カタログ',str(e))
     def open_previous(self):

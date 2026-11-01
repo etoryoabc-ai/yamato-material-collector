@@ -1,4 +1,4 @@
-"""v0.4 collection pipeline; HTML catalog is generated even on network failure."""
+"""v0.5 collection pipeline; HTML catalog is generated even on network failure."""
 import csv
 import hashlib
 import json
@@ -29,9 +29,10 @@ def quotas_report(manifest):
         rows.append({'scene':scene['id'],'topic':scene['topic'],'quota':scene['quota'],'candidates':len(links),'downloaded':available,'shortage':max(0,scene['quota']-len(links))})
     return rows
 
-def collect(script,out,user_page,target=100,mode='free',key='',model='gpt-4.1-mini',progress=print,cancel=None,source_factory=CommonsSource,terms_confirmed=False,agent_override=None):
+def collect(script,out,user_page,target=100,mode='free',key='',model='gpt-4.1-mini',progress=print,cancel=None,source_factory=CommonsSource,terms_confirmed=False,agent_override=None,download_limit=None):
     if not terms_confirmed:raise ValueError('API・再利用条件を初回設定で確認してください')
     if not 1<=target<=500:raise ValueError('目標枚数は1〜500')
+    if download_limit is not None and not 1<=download_limit<=500:raise ValueError('取得枚数上限は1〜500')
     out=Path(out)
     if out.exists() and any(out.iterdir()):raise ValueError('出力先を上書きしません。新しいフォルダを指定してください')
     text=Path(script).read_text(encoding='utf-8-sig')
@@ -43,7 +44,7 @@ def collect(script,out,user_page,target=100,mode='free',key='',model='gpt-4.1-mi
     scenes=ai_analysis(text,key,model,evidence) if mode=='ai' else free_analysis(text)
     if not scenes:raise ValueError('原稿から場面を作成できませんでした')
     allocate(scenes,target)
-    manifest={'version':'0.4','run_id':out.name,'created_at':datetime.now(timezone.utc).isoformat(),'target':target,'mode':mode,'analysis':'AI推定・未検証' if mode=='ai' else '無料ルール（AI未使用）','scenes':scenes,'assets':{},'links':[],'choices':{},'errors':[],'network':{},'raw_discovered':0,'rejected':[]}
+    manifest={'version':'0.5','run_id':out.name,'created_at':datetime.now(timezone.utc).isoformat(),'target':target,'mode':mode,'analysis':'AI推定・未検証' if mode=='ai' else '無料ルール（AI未使用）','scenes':scenes,'assets':{},'links':[],'choices':{},'errors':[],'network':{},'raw_discovered':0,'rejected':[]}
     def stopped():return cancel is not None and cancel.is_set()
     source=source_factory(evidence,agent_override or build_user_agent(user_page),progress)
     online=False
@@ -102,6 +103,8 @@ def collect(script,out,user_page,target=100,mode='free',key='',model='gpt-4.1-mi
             a['download_status']='利用条件未確認・画像未取得';continue
         if a['mime'] not in ('image/jpeg','image/png'):
             a['download_status']='形式対象外（原本JPEG/PNGのみ）';continue
+        if download_limit is not None and len(sha256s)>=download_limit:
+            a['download_status']='取得テストの保存目標到達・保存省略';continue
         progress('画像取得: '+a['title'])
         try:
             p,digest=source.download(a['original_url'],out/'候補原本'/aid)
