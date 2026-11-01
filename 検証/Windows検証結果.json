@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-01",
+  "commit": "2c6d8962a14cd6f3cd5dab9636a37126babefe59",
+  "run_url": "https://github.com/etoryoabc-ai/yamato-material-collector/actions/runs/41268860086",
+  "unit": {
+    "tests": 24,
+    "result": "success"
+  },
+  "real_media": {
+    "result": "failure",
+    "discovered": 0,
+    "candidates": 0,
+    "downloaded": 0,
+    "browser_actual_media_verified": false
+  },
+  "ai_live_api_verified": false,
+  "robots_policy_conflict": "Commons /w/ is disallowed; action=query is not an Allow exception. Tool does not override robots."
+}
